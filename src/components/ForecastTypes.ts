@@ -1,0 +1,1 @@
+export type ChartPoint = { label: string; tmaxC: number; tminC: number; wcode?: number; precip?: number };

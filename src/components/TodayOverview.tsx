@@ -43,22 +43,18 @@ export default function TodayOverview({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <InfoRow
           icon={<Droplets className="w-4 h-4" />}
-          label="Niederschlag"
           value={`${today.precip?.toFixed(1) ?? 0} mm`}
         />
         <InfoRow
           icon={<Wind className="w-4 h-4" />}
-          label="Wind (max)"
           value={`${daily.wind_speed_10m_max[0]?.toFixed(0) ?? 0} km/h`}
         />
         <InfoRow
           icon={<Sun className="w-4 h-4" />}
-          label="Sonnenaufgang"
           value={formatTime(daily.sunrise[0])}
         />
         <InfoRow
           icon={<Moon className="w-4 h-4" />}
-          label="Sonnenuntergang"
           value={formatTime(daily.sunset[0])}
         />
       </div>

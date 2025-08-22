@@ -1,7 +1,8 @@
 import { Droplets, Moon, Sun, Wind } from "lucide-react";
 import InfoRow from "./InfoRow";
-import { formatTempUnit } from "../utils/number";
+
 import wmo from "../weather/wmo";
+import { formatTempUnit } from "../utils/number";
 import { formatTime } from "../utils/time";
 
 export default function TodayOverview({

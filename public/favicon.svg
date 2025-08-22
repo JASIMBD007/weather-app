@@ -1,0 +1,25 @@
+<!-- public/favicon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#4f46e5"></stop>
+      <stop offset="1" stop-color="#06b6d4"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- sun -->
+  <circle cx="24" cy="24" r="10" fill="url(#g)"></circle>
+  <g stroke="url(#g)" stroke-width="2">
+    <line x1="24" y1="8" x2="24" y2="2"></line>
+    <line x1="24" y1="46" x2="24" y2="40"></line>
+    <line x1="8" y1="24" x2="2" y2="24"></line>
+    <line x1="46" y1="24" x2="40" y2="24"></line>
+    <line x1="12" y1="12" x2="8" y2="8"></line>
+    <line x1="36" y1="36" x2="40" y2="40"></line>
+    <line x1="36" y1="12" x2="40" y2="8"></line>
+    <line x1="12" y1="36" x2="8" y2="40"></line>
+  </g>
+
+  <!-- waves -->
+  <path d="M4 52c6 0 6-4 12-4s6 4 12 4 6-4 12-4 6 4 12 4" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round"></path>
+</svg>

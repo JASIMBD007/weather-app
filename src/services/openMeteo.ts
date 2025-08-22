@@ -1,5 +1,10 @@
 import { BERLIN_TZ } from "../constants";
-import type { DailyForecastResponse, GeoResult, SelectedPlace } from "../types";
+import type {
+  DailyForecastResponse,
+  GeoResult,
+  HourlyForecast,
+  SelectedPlace,
+} from "../types";
 
 export async function searchGermanyCities(name: string): Promise<GeoResult[]> {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
@@ -65,4 +70,31 @@ export function toSelectedPlace(
     };
   }
   return place;
+}
+
+export async function fetchHourlyForecast(
+  lat: number,
+  lon: number
+): Promise<HourlyForecast> {
+  const url = new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude", String(lat));
+  url.searchParams.set("longitude", String(lon));
+  url.searchParams.set(
+    "hourly",
+    [
+      "temperature_2m",
+      "precipitation",
+      "wind_speed_10m",
+      "wind_gusts_10m",
+      "weathercode",
+    ].join(",")
+  );
+  url.searchParams.set("windspeed_unit", "kmh");
+  url.searchParams.set("timezone", "Europe/Berlin");
+  url.searchParams.set("forecast_days", "2"); // covers late night
+
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error("Fehler beim Laden der Stundenwerte");
+  const data = await res.json();
+  return data.hourly as HourlyForecast;
 }

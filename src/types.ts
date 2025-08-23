@@ -17,6 +17,7 @@ export interface HourlyForecast {
   wind_speed_10m: number[];
   wind_gusts_10m: number[];
   weathercode: number[];
+  is_day: number[];
 }
 
 export interface DailyForecastResponse {

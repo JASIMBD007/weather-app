@@ -1,10 +1,10 @@
-export const deShortFmt = new Intl.DateTimeFormat("de-DE", {
+export const enShortFmt = new Intl.DateTimeFormat("en-GB", {
   weekday: "short",
   day: "2-digit",
   month: "2-digit",
 });
 
-export const deLongFmt = new Intl.DateTimeFormat("de-DE", {
+export const enLongFmt = new Intl.DateTimeFormat("en-GB", {
   weekday: "long",
   day: "2-digit",
   month: "long",

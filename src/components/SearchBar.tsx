@@ -19,22 +19,24 @@ export default function SearchBar({
   onGeolocate: () => void;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
+
   return (
     <form onSubmit={onSubmit} className="relative ml-auto flex-1 max-w-xl">
       <div className="flex items-center gap-2 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 px-3 py-2">
         <Search className="w-4 h-4 text-slate-500" />
         <input
-          aria-label="Ort suchen"
+          aria-label="Search place"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Ort in Deutschland eingeben (z.B. Sylt, Kiel, München)"
+          placeholder='Enter a place in Germany (e.g. "Sylt", "Kiel", "Munich")'
           className="w-full outline-none bg-transparent placeholder:text-slate-400"
         />
         <button
           type="button"
           onClick={onGeolocate}
-          title="Meinen Standort verwenden"
+          title="Use my location"
           className="p-1.5 rounded-xl hover:bg-slate-100 transition"
+          aria-label="Use my location"
         >
           <Locate className="w-5 h-5" />
         </button>
@@ -42,9 +44,10 @@ export default function SearchBar({
           type="submit"
           className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition"
         >
-          Suchen
+          Search
         </button>
       </div>
+
       <AnimatePresence>
         {suggestions.length > 0 && (
           <motion.div
@@ -63,9 +66,7 @@ export default function SearchBar({
               >
                 <MapPin className="w-4 h-4 text-rose-500" />
                 <span className="font-medium">{s.name}</span>
-                <span className="text-slate-500 text-sm">
-                  {[s.admin1, s.country].filter(Boolean).join(", ")}
-                </span>
+                <span className="text-slate-500 text-sm">{[s.admin1, s.country].filter(Boolean).join(", ")}</span>
               </button>
             ))}
           </motion.div>

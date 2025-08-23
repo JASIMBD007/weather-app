@@ -87,11 +87,12 @@ export async function fetchHourlyForecast(
       "wind_speed_10m",
       "wind_gusts_10m",
       "weathercode",
+      "is_day",
     ].join(",")
   );
   url.searchParams.set("windspeed_unit", "kmh");
   url.searchParams.set("timezone", "Europe/Berlin");
-  url.searchParams.set("forecast_days", "2"); // covers late night
+  url.searchParams.set("forecast_days", "2");
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error("Fehler beim Laden der Stundenwerte");

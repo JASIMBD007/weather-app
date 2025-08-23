@@ -1,3 +1,4 @@
+// src/components/TilesGrid.tsx
 import DayCard from "./DayCard";
 import type { DailyForecastResponse } from "../types";
 

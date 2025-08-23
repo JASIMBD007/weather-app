@@ -1,13 +1,7 @@
 import React from "react";
 import type { SelectedPlace } from "../types";
 
-function WeatherChip({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
+function WeatherChip({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -28,7 +22,7 @@ export default function RecentChips({
   if (!recents.length) return null;
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-slate-500">Zuletzt gesucht:</span>
+      <span className="text-slate-500">Recently searched:</span>
       {recents.map((r) => (
         <WeatherChip key={`${r.name}-${r.latitude}`} onClick={() => onPick(r)}>
           {r.displayName || r.name}

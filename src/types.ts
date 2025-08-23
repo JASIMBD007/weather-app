@@ -10,27 +10,15 @@ export interface GeoResult {
   population?: number;
 }
 
-export interface DailyForecastResponse {
-  daily: {
-    time: string[];
-    weathercode: number[];
-    temperature_2m_max: number[];
-    temperature_2m_min: number[];
-    precipitation_sum: number[];
-    sunrise: string[];
-    sunset: string[];
-    wind_speed_10m_max: number[];
-    wind_gusts_10m_max: number[];
-  };
-  timezone: string;
+export interface HourlyForecast {
+  time: string[];
+  temperature_2m: number[];
+  precipitation: number[];
+  wind_speed_10m: number[];
+  wind_gusts_10m: number[];
+  weathercode: number[];
 }
 
-export interface SelectedPlace {
-  name: string;
-  displayName: string; // e.g. "München, Bayern"
-  latitude: number;
-  longitude: number;
-}
 export interface DailyForecastResponse {
   daily: {
     time: string[];
@@ -56,31 +44,13 @@ export interface DailyForecastResponse {
     daylight_duration?: number[]; // seconds
     wind_direction_10m_dominant?: number[]; // degrees
   };
-  timezone: string;
-}
-
-export interface HourlyForecast {
-  time: string[];
-  temperature_2m: number[];
-  precipitation: number[];
-  wind_speed_10m: number[];
-  wind_gusts_10m: number[];
-  weathercode: number[];
-}
-
-export interface DailyForecastResponse {
-  daily: {
-    time: string[];
-    weathercode: number[];
-    temperature_2m_max: number[];
-    temperature_2m_min: number[];
-    precipitation_sum: number[];
-    sunrise: string[];
-    sunset: string[];
-    wind_speed_10m_max: number[];
-    wind_gusts_10m_max: number[];
-  };
-  // NEW
   hourly?: HourlyForecast;
   timezone: string;
+}
+
+export interface SelectedPlace {
+  name: string;
+  displayName: string; // e.g. "München, Bayern"
+  latitude: number;
+  longitude: number;
 }

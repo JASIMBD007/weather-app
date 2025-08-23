@@ -1,4 +1,3 @@
-import React from "react";
 import { Sun as SunIcon, Moon as MoonIcon } from "lucide-react";
 import wmo from "../weather/wmo";
 import { formatTempUnit } from "../utils/number";

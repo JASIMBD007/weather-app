@@ -9,10 +9,12 @@ import Skeleton from "./components/Skeleton";
 import EmptyState from "./components/EmptyState";
 import DevTests from "./components/DevTests";
 import HourlyTiles from "./components/HourlyTiles";
+
 import useDebounced from "./hooks/useDebounced";
 import { enShortFmt } from "./utils/date";
 import { safeReplaceState } from "./utils/history";
 import { RECENTS_KEY } from "./constants";
+
 import {
   fetchDailyForecast,
   fetchHourlyForecast,
@@ -20,6 +22,7 @@ import {
   searchGermanyCities,
   toSelectedPlace,
 } from "./services/openMeteo";
+
 import type { DailyForecastResponse, GeoResult, HourlyForecast, SelectedPlace } from "./types";
 
 const DEFAULT_PLACE: SelectedPlace = {
@@ -61,7 +64,6 @@ export default function App() {
       }
       try {
         const results = await searchGermanyCities(q);
-        if (!cancelled) setSuggestions(results);
       } catch {
         if (!cancelled) setSuggestions([]);
       }
@@ -85,14 +87,11 @@ export default function App() {
   const bootRef = useRef(false);
   const handlePick = useCallback(async (place: GeoResult | SelectedPlace) => {
     const sp = toSelectedPlace(place);
-
-    // Select & reset UI state
     setSelected(sp);
     setQuery(sp.name);
     setSuggestions([]);
     setError(null);
 
-    // Update URL
     try {
       const params = new URLSearchParams(window.location.search);
       params.set("q", sp.name);
@@ -144,7 +143,7 @@ export default function App() {
 
       if (q && q.trim().length >= 2) {
         try {
-          const results = await searchGermanyCities(q.trim());
+          const results = await searchGermanyCities(q.trim()); // now global in your service
           if (results?.length) {
             await handlePick(results[0]);
             return;
@@ -197,9 +196,9 @@ export default function App() {
           if (best) {
             await handlePick(best);
           } else {
-            setError("Location is not in Germany. Please search for a German city.");
+            setError("Couldn't resolve your location. Try searching by city name.");
           }
-        } catch (e: any) {
+        } catch {
           setError("Geolocation failed.");
         } finally {
           setLoading(false);
@@ -214,13 +213,20 @@ export default function App() {
   }, [handlePick]);
 
   const refreshSelected = useCallback(() => {
-    if (!selected) return;
-    handlePick(selected);
+    if (selected) handlePick(selected);
   }, [handlePick, selected]);
 
   const chartData = useMemo(() => {
     if (!daily)
-      return [] as Array<{ date: Date; label: string; tmaxC: number; tminC: number; wcode: number; precip: number }>;
+      return [] as Array<{
+        date: Date;
+        label: string;
+        tmaxC: number;
+        tminC: number;
+        wcode: number;
+        precip: number;
+      }>;
+
     return daily.time.map((t, i) => ({
       date: new Date(t),
       label: enShortFmt.format(new Date(t)),
@@ -235,7 +241,14 @@ export default function App() {
 
   const hourlyToday = useMemo(() => {
     if (!hourly)
-      return [] as Array<{ time: Date; tempC: number; precip: number; wind: number; code: number; isDay?: boolean }>;
+      return [] as Array<{
+        time: Date;
+        tempC: number;
+        precip: number;
+        wind: number;
+        code: number;
+        isDay?: boolean;
+      }>;
 
     const now = new Date();
     const floorNow = new Date(now);
@@ -340,7 +353,7 @@ export default function App() {
             <a className="underline" href="https://open-meteo.com/" target="_blank" rel="noreferrer">
               Open-Meteo
             </a>
-            . Only places within Germany are suggested.
+            .
           </div>
         </div>
       </footer>

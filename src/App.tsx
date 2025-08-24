@@ -23,7 +23,12 @@ import {
   toSelectedPlace,
 } from "./services/openMeteo";
 
-import type { DailyForecastResponse, GeoResult, HourlyForecast, SelectedPlace } from "./types";
+import type {
+  DailyForecastResponse,
+  GeoResult,
+  HourlyForecast,
+  SelectedPlace,
+} from "./types";
 
 const DEFAULT_PLACE: SelectedPlace = {
   name: "Berlin",
@@ -53,6 +58,7 @@ export default function App() {
 
   const year = new Date().getFullYear();
 
+  // Fetch suggestions
   useEffect(() => {
     let cancelled = false;
 
@@ -64,6 +70,7 @@ export default function App() {
       }
       try {
         const results = await searchGermanyCities(q);
+        if (!cancelled) setSuggestions(results);
       } catch {
         if (!cancelled) setSuggestions([]);
       }
@@ -92,6 +99,7 @@ export default function App() {
     setSuggestions([]);
     setError(null);
 
+    // Update URL
     try {
       const params = new URLSearchParams(window.location.search);
       params.set("q", sp.name);
@@ -100,6 +108,7 @@ export default function App() {
       /* noop */
     }
 
+    // Persist recents
     setRecents((prev) => {
       const next = [sp, ...prev.filter((r) => r.name !== sp.name)].slice(0, 6);
       try {
@@ -128,6 +137,7 @@ export default function App() {
     }
   }, []);
 
+  // Boot: select ?q or default Berlin
   useEffect(() => {
     if (bootRef.current) return;
     bootRef.current = true;
@@ -143,15 +153,16 @@ export default function App() {
 
       if (q && q.trim().length >= 2) {
         try {
-          const results = await searchGermanyCities(q.trim()); // now global in your service
+          const results = await searchGermanyCities(q.trim());
           if (results?.length) {
             await handlePick(results[0]);
             return;
           }
         } catch {
-          /* fall through to default */
+          /* fall through */
         }
       }
+
       await handlePick(DEFAULT_PLACE);
     })();
   }, [handlePick]);
@@ -216,6 +227,7 @@ export default function App() {
     if (selected) handlePick(selected);
   }, [handlePick, selected]);
 
+  // 10-day chart data
   const chartData = useMemo(() => {
     if (!daily)
       return [] as Array<{
@@ -311,7 +323,12 @@ export default function App() {
               {!loading && daily && today && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <TodayOverview
-                    today={{ tmaxC: today.tmaxC, tminC: today.tminC, wcode: today.wcode, precip: today.precip }}
+                    today={{
+                      tmaxC: today.tmaxC,
+                      tminC: today.tminC,
+                      wcode: today.wcode,
+                      precip: today.precip,
+                    }}
                     daily={daily}
                     unit={unit}
                   />

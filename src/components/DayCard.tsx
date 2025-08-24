@@ -2,40 +2,51 @@ import { Sun } from "lucide-react";
 import wmo from "../weather/wmo";
 import { cToF } from "../utils/number";
 
-export default function DayCard({
-  date,
-  code,
-  tmax,
-  tmin,
-  precip,
-  unit,
-}: {
+type Props = {
   date: Date;
   code: number;
   tmax: number;
   tmin: number;
   precip: number;
   unit: "C" | "F";
-}) {
-  const Icon = wmo[code]?.Icon || Sun;
-  const isToday = new Date().toDateString() === date.toDateString();
-  const de = new Intl.DateTimeFormat("de-DE", {
-    weekday: "short",
-    day: "2-digit",
+};
+
+function dayKey(d: Date, tz = "Europe/Berlin") {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
     month: "2-digit",
-  });
+    day: "2-digit",
+  }).format(d);
+}
+
+export default function DayCard({ date, code, tmax, tmin, precip, unit }: Props) {
+  const tz = "Europe/Berlin";
+  const Icon = wmo[code]?.Icon || Sun;
+
+  const isToday = dayKey(new Date(), tz) === dayKey(date, tz);
+
+  const label = isToday
+    ? "Today"
+    : new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz,
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+      }).format(date);
+
+  const gradient = isToday
+    ? "from-indigo-200 to-sky-200" // darker for today
+    : "from-indigo-50 to-sky-50"; // normal
+  const ring = isToday ? "ring-2 ring-indigo-400 shadow-md" : "ring-1 ring-slate-200";
 
   return (
     <div
-      className={[
-        "rounded-2xl p-3 shadow-sm ring-1 ring-slate-200",
-        "bg-gradient-to-br from-indigo-50 to-sky-50",
-        isToday ? "ring-2 ring-indigo-400" : "",
-        "hover:shadow-sm transition",
-      ].join(" ")}
+      className={["rounded-2xl p-3 transition bg-gradient-to-br", gradient, ring].join(" ")}
+      aria-current={isToday ? "date" : undefined}
     >
       <div className="flex items-center justify-between">
-        <div className="text-sm text-slate-600">{isToday ? "Heute" : de.format(date)}</div>
+        <div className={isToday ? "text-sm text-slate-700" : "text-sm text-slate-500"}>{label}</div>
         <Icon className="w-5 h-5 text-indigo-600" />
       </div>
 

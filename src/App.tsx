@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import WeatherHeader from "./components/WeatherHeader";
 import RecentChips from "./components/RecentChips";
 import TodayOverview from "./components/TodayOverview";
@@ -8,7 +9,6 @@ import Skeleton from "./components/Skeleton";
 import EmptyState from "./components/EmptyState";
 import DevTests from "./components/DevTests";
 import HourlyTiles from "./components/HourlyTiles";
-
 import useDebounced from "./hooks/useDebounced";
 import { enShortFmt } from "./utils/date";
 import { safeReplaceState } from "./utils/history";
@@ -22,7 +22,14 @@ import {
 } from "./services/openMeteo";
 import type { DailyForecastResponse, GeoResult, HourlyForecast, SelectedPlace } from "./types";
 
-export default function GermanyWeatherApp() {
+const DEFAULT_PLACE: SelectedPlace = {
+  name: "Berlin",
+  displayName: "Berlin",
+  latitude: 52.52,
+  longitude: 13.405,
+};
+
+export default function App() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounced(query, 300);
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
@@ -43,70 +50,74 @@ export default function GermanyWeatherApp() {
 
   const year = new Date().getFullYear();
 
-  // Suggestions (Germany only)
   useEffect(() => {
     let cancelled = false;
+
     (async () => {
-      if (!debouncedQuery || debouncedQuery.trim().length < 2) {
+      const q = debouncedQuery.trim();
+      if (q.length < 2) {
         setSuggestions([]);
         return;
       }
       try {
-        const results = await searchGermanyCities(debouncedQuery);
+        const results = await searchGermanyCities(q);
         if (!cancelled) setSuggestions(results);
       } catch {
         if (!cancelled) setSuggestions([]);
       }
     })();
+
     return () => {
       cancelled = true;
     };
   }, [debouncedQuery]);
 
-  // Parse ?q=… on load
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const q = params.get("q");
       if (q) setQuery(q);
-    } catch {}
+    } catch {
+      /* noop */
+    }
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (suggestions.length > 0) handlePick(suggestions[0]);
-  }
-
-  async function handlePick(place: GeoResult | SelectedPlace) {
+  const bootRef = useRef(false);
+  const handlePick = useCallback(async (place: GeoResult | SelectedPlace) => {
     const sp = toSelectedPlace(place);
 
+    // Select & reset UI state
     setSelected(sp);
     setQuery(sp.name);
     setSuggestions([]);
     setError(null);
 
-    // update URL
+    // Update URL
     try {
       const params = new URLSearchParams(window.location.search);
       params.set("q", sp.name);
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
-      safeReplaceState(newUrl);
-    } catch {}
+      safeReplaceState(`${window.location.pathname}?${params.toString()}`);
+    } catch {
+      /* noop */
+    }
 
-    // persist recents
-    const nextRecents = [sp, ...recents.filter((r) => r.name !== sp.name)].slice(0, 6);
-    setRecents(nextRecents);
-    try {
-      localStorage.setItem(RECENTS_KEY, JSON.stringify(nextRecents));
-    } catch {}
+    setRecents((prev) => {
+      const next = [sp, ...prev.filter((r) => r.name !== sp.name)].slice(0, 6);
+      try {
+        localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
 
-    await fetchForecast(sp.latitude, sp.longitude);
-  }
-
-  async function fetchForecast(lat: number, lon: number) {
+    // Fetch data
     setLoading(true);
     try {
-      const [dailyData, hourlyData] = await Promise.all([fetchDailyForecast(lat, lon), fetchHourlyForecast(lat, lon)]);
+      const [dailyData, hourlyData] = await Promise.all([
+        fetchDailyForecast(sp.latitude, sp.longitude),
+        fetchHourlyForecast(sp.latitude, sp.longitude),
+      ]);
       setDaily(dailyData);
       setHourly(hourlyData);
     } catch (e: any) {
@@ -116,12 +127,68 @@ export default function GermanyWeatherApp() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function handleGeolocate() {
+  useEffect(() => {
+    if (bootRef.current) return;
+    bootRef.current = true;
+
+    (async () => {
+      let q: string | null = null;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        q = params.get("q");
+      } catch {
+        /* noop */
+      }
+
+      if (q && q.trim().length >= 2) {
+        try {
+          const results = await searchGermanyCities(q.trim());
+          if (results?.length) {
+            await handlePick(results[0]);
+            return;
+          }
+        } catch {
+          /* fall through to default */
+        }
+      }
+      await handlePick(DEFAULT_PLACE);
+    })();
+  }, [handlePick]);
+
+  useEffect(() => {
+    if (!selected) return;
+    if (query !== selected.name) setQuery(selected.name);
+    if (suggestions.length) setSuggestions([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (suggestions.length > 0) handlePick(suggestions[0]);
+    },
+    [handlePick, suggestions]
+  );
+
+  const handleRemoveRecent = useCallback((name: string) => {
+    setRecents((prev) => {
+      const next = prev.filter((r) => r.name !== name);
+      try {
+        localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
+  }, []);
+
+  const handleGeolocate = useCallback(() => {
     if (!navigator.geolocation) return;
     setLoading(true);
     setError(null);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -144,23 +211,19 @@ export default function GermanyWeatherApp() {
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
-  }
+  }, [handlePick]);
 
-  // 10-day chart data
+  const refreshSelected = useCallback(() => {
+    if (!selected) return;
+    handlePick(selected);
+  }, [handlePick, selected]);
+
   const chartData = useMemo(() => {
     if (!daily)
-      return [] as Array<{
-        date: Date;
-        label: string;
-        tmaxC: number;
-        tminC: number;
-        wcode: number;
-        precip: number;
-      }>;
-    const fmt = enShortFmt;
+      return [] as Array<{ date: Date; label: string; tmaxC: number; tminC: number; wcode: number; precip: number }>;
     return daily.time.map((t, i) => ({
       date: new Date(t),
-      label: fmt.format(new Date(t)),
+      label: enShortFmt.format(new Date(t)),
       tmaxC: daily.temperature_2m_max[i],
       tminC: daily.temperature_2m_min[i],
       wcode: daily.weathercode[i],
@@ -170,18 +233,14 @@ export default function GermanyWeatherApp() {
 
   const today = chartData[0];
 
-  // Hourly items for today (or next hours if late)
   const hourlyToday = useMemo(() => {
     if (!hourly)
-      return [] as Array<{
-        time: Date;
-        tempC: number;
-        precip: number;
-        wind: number;
-        code: number;
-        isDay?: boolean;
-      }>;
+      return [] as Array<{ time: Date; tempC: number; precip: number; wind: number; code: number; isDay?: boolean }>;
+
     const now = new Date();
+    const floorNow = new Date(now);
+    floorNow.setMinutes(0, 0, 0);
+
     const items = hourly.time.map((iso, i) => ({
       time: new Date(iso),
       tempC: hourly.temperature_2m[i],
@@ -190,21 +249,24 @@ export default function GermanyWeatherApp() {
       code: hourly.weathercode[i],
       isDay: hourly.is_day?.[i] === 1,
     }));
+
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
-    const todayHours = items.filter((x) => x.time >= now && x.time <= endOfDay);
+
+    const todayHours = items.filter((x) => x.time >= floorNow && x.time <= endOfDay);
     const take = todayHours.length ? todayHours : items.slice(0, 12);
+
     return take.slice(0, 16);
   }, [hourly]);
 
-  const showTests = (() => {
+  const showTests = useMemo(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       return params.get("test") === "1";
     } catch {
       return false;
     }
-  })();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50 to-indigo-50 text-slate-800">
@@ -217,12 +279,12 @@ export default function GermanyWeatherApp() {
         onGeolocate={handleGeolocate}
         unit={unit}
         onUnitChange={setUnit}
-        onRefresh={() => selected && fetchForecast(selected.latitude, selected.longitude)}
+        onRefresh={refreshSelected}
         selectedDisplay={selected ? selected.displayName || selected.name : null}
       />
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6">
-        <RecentChips recents={recents} onPick={(r) => handlePick(r)} />
+        <RecentChips recents={recents} onPick={handlePick} onDelete={handleRemoveRecent} />
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
           <div className="lg:col-span-2">
@@ -236,12 +298,7 @@ export default function GermanyWeatherApp() {
               {!loading && daily && today && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <TodayOverview
-                    today={{
-                      tmaxC: today.tmaxC,
-                      tminC: today.tminC,
-                      wcode: today.wcode,
-                      precip: today.precip,
-                    }}
+                    today={{ tmaxC: today.tmaxC, tminC: today.tminC, wcode: today.wcode, precip: today.precip }}
                     daily={daily}
                     unit={unit}
                   />

@@ -44,7 +44,7 @@ export default function HourlyTiles({
 
   return (
     <div className="rounded-2xl bg-white/70 ring-1 ring-slate-200 p-3">
-      <div className="font-medium mb-2">Hourly overview (today)</div>
+      <div className="font-medium mb-2">Hourly overview (Today)</div>
 
       <div className={containerClass}>
         {items.map((h, idx) => {

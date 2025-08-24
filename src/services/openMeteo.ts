@@ -58,7 +58,10 @@ export async function reverseGeocodeDE(lat: number, lon: number): Promise<GeoRes
   } as GeoResult;
 }
 
-export async function fetchDailyForecast(lat: number, lon: number): Promise<DailyForecastResponse["daily"]> {
+export async function fetchDailyForecast(
+  lat: number,
+  lon: number
+): Promise<DailyForecastResponse["daily"]> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lon));
@@ -73,16 +76,19 @@ export async function fetchDailyForecast(lat: number, lon: number): Promise<Dail
       "sunset",
       "wind_speed_10m_max",
       "wind_gusts_10m_max",
+      "uv_index_max",            
+      "uv_index_clear_sky_max",
     ].join(",")
   );
+  url.searchParams.set("timezone", "Europe/Berlin");
   url.searchParams.set("forecast_days", "10");
-  url.searchParams.set("timezone", "auto");
 
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error("Failed to load daily forecast");
+  if (!res.ok) throw new Error("Fehler beim Laden der Vorhersage");
   const data: DailyForecastResponse = await res.json();
   return data.daily;
 }
+
 
 export async function fetchHourlyForecast(lat: number, lon: number): Promise<HourlyForecast> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
